@@ -1,0 +1,128 @@
+###############################################################################
+# Visual Studio 2022 / .NET / C++ / allgemeine Build-Artefakte
+###############################################################################
+
+# Benutzer- und IDE-spezifische Dateien
+.vs/
+*.user
+*.userosscache
+*.suo
+*.rsuser
+*.sln.docstates
+
+# Build-Ausgaben
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+out/
+
+# Logs
+*.log
+
+# Test-Ergebnisse
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+
+# Visual Studio Profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!**/[Pp]ackages/repositories.config
+*.nuget.props
+*.nuget.targets
+
+# Nur falls "packages/" wirklich lokal erzeugt wird
+# (bei PackageReference oft nicht nötig)
+# packages/
+
+# Dotnet / Publish
+publish/
+artifacts/
+
+# Rider / ReSharper / JetBrains
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Rider
+.idea/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+Makefile
+install_manifest.txt
+
+# Ninja
+.ninja_deps
+.ninja_log
+
+# VC++ generierte Dateien
+*.obj
+*.iobj
+*.ipdb
+*.pch
+*.pdb
+*.ilk
+*.idb
+*.tlog
+*.lastbuildstate
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.VC.opendb
+
+# Lokale Datenbanken / Cache
+*.dbmdl
+*.jfm
+*.cache
+*.opendb
+
+# ClickOnce / Deployment
+app.publish/
+*.publishsettings
+
+# Azure / lokale Emulatoren
+ecf/
+rcf/
+
+# Code Coverage / Analyse
+*.coverage
+*.coveragexml
+coverage/
+TestResults/
+
+# Sonstige temporäre Dateien
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# OS-Dateien
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Diese Zeile ggf. entfernen, wenn du packages.config + lokales packages/ nutzt:
+# **/[Pp]ackages/*
