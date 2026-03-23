@@ -3,9 +3,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <EnableDefaultItems>true</EnableDefaultItems>
     <AssemblyName>NtClock</AssemblyName>
     <RootNamespace>NtClock</RootNamespace>
   </PropertyGroup>

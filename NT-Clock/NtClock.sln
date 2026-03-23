@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtClock", "src\NtClock\NtClock.csproj", "{A0C7FD5D-2EA1-4DA1-8A40-61CC3D6A4D5D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NtClock", "src\NtClock\NtClock.csproj", "{A2A8E2EE-6F55-4A21-8F39-7A0B090B98EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,10 +10,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A0C7FD5D-2EA1-4DA1-8A40-61CC3D6A4D5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A0C7FD5D-2EA1-4DA1-8A40-61CC3D6A4D5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A0C7FD5D-2EA1-4DA1-8A40-61CC3D6A4D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A0C7FD5D-2EA1-4DA1-8A40-61CC3D6A4D5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2A8E2EE-6F55-4A21-8F39-7A0B090B98EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2A8E2EE-6F55-4A21-8F39-7A0B090B98EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2A8E2EE-6F55-4A21-8F39-7A0B090B98EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2A8E2EE-6F55-4A21-8F39-7A0B090B98EE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
