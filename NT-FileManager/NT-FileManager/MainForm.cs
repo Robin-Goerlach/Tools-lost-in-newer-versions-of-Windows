@@ -11,12 +11,15 @@ namespace RetroNtFileManager
         private readonly ToolStrip _toolStrip;
         private readonly StatusStrip _statusStrip;
         private readonly ToolStripStatusLabel _statusLabel;
+        private readonly AppSettings _appSettings;
 
         public MainForm()
         {
-            Text = "File Manager";
+            _appSettings = AppSettingsStore.Load();
+
+            Text = ProductInfo.MainWindowTitle;
             IsMdiContainer = true;
-            WindowState = FormWindowState.Maximized;
+            StartPosition = FormStartPosition.Manual;
             MinimumSize = new Size(900, 600);
             BackColor = Color.Teal;
             KeyPreview = true;
@@ -25,17 +28,31 @@ namespace RetroNtFileManager
             _toolStrip = BuildToolStrip();
             _statusStrip = new StatusStrip();
             _statusLabel = new ToolStripStatusLabel("Bereit");
+
             _statusStrip.Items.Add(_statusLabel);
 
             Controls.Add(_statusStrip);
             Controls.Add(_toolStrip);
             Controls.Add(_menuStrip);
+
             MainMenuStrip = _menuStrip;
 
-            Load += (_, __) => OpenNewWindow(GetStartupPath());
+            Load += OnMainFormLoad;
+            FormClosing += OnMainFormClosing;
             MdiChildActivate += (_, __) => UpdateWindowTitle();
 
             ClassicTheme.Apply(this);
+        }
+
+        private void OnMainFormLoad(object sender, EventArgs e)
+        {
+            RestoreWindowLayout();
+            OpenNewWindow(GetStartupPath());
+        }
+
+        private void OnMainFormClosing(object sender, FormClosingEventArgs e)
+        {
+            SaveWindowLayout();
         }
 
         private MenuStrip BuildMenuStrip()
@@ -94,7 +111,7 @@ namespace RetroNtFileManager
             windowMenu.DropDownItems.Add(CreateItem("Symbole anordnen", null, (_, __) => LayoutMdi(MdiLayout.ArrangeIcons)));
 
             ToolStripMenuItem helpMenu = new ToolStripMenuItem("&Hilfe");
-            helpMenu.DropDownItems.Add(CreateItem("&Über File Manager...", null, (_, __) => ShowAboutDialog()));
+            helpMenu.DropDownItems.Add(CreateItem("&Über SASD - Filemanager...", null, (_, __) => ShowAboutDialog()));
 
             menuStrip.Items.AddRange(new ToolStripItem[]
             {
@@ -113,6 +130,7 @@ namespace RetroNtFileManager
         private ToolStrip BuildToolStrip()
         {
             ToolStrip toolStrip = new ToolStrip();
+
             toolStrip.Items.Add(CreateButton("Neu", (_, __) => OpenNewWindow(GetCurrentDirectory())));
             toolStrip.Items.Add(CreateButton("Öffnen", (_, __) => ActiveWindow?.OpenSelectedEntry()));
             toolStrip.Items.Add(new ToolStripSeparator());
@@ -123,6 +141,7 @@ namespace RetroNtFileManager
             toolStrip.Items.Add(new ToolStripSeparator());
             toolStrip.Items.Add(CreateButton("Nach oben", (_, __) => ActiveWindow?.GoUpOneLevel()));
             toolStrip.Items.Add(CreateButton("Aktualisieren", (_, __) => ActiveWindow?.RefreshView()));
+
             return toolStrip;
         }
 
@@ -133,7 +152,6 @@ namespace RetroNtFileManager
                 ShowShortcutKeys = !string.IsNullOrWhiteSpace(shortcutDisplayText),
                 ShortcutKeyDisplayString = shortcutDisplayText ?? string.Empty
             };
-
             item.Click += handler;
             return item;
         }
@@ -166,71 +184,54 @@ namespace RetroNtFileManager
                 case Keys.Control | Keys.N:
                     OpenNewWindow(GetCurrentDirectory());
                     return true;
-
                 case Keys.Enter:
                     ActiveWindow?.OpenSelectedEntry();
                     return true;
-
                 case Keys.F5:
                     ActiveWindow?.CopySelectedEntry();
                     return true;
-
                 case Keys.F6:
                     ActiveWindow?.MoveSelectedEntry();
                     return true;
-
                 case Keys.F2:
                     ActiveWindow?.RenameSelectedEntry();
                     return true;
-
                 case Keys.Delete:
                     ActiveWindow?.DeleteSelectedEntry();
                     return true;
-
                 case Keys.Control | Keys.Shift | Keys.N:
                     ActiveWindow?.CreateFolder();
                     return true;
-
                 case Keys.Alt | Keys.Enter:
                     ActiveWindow?.ShowPropertiesForSelection();
                     return true;
-
                 case Keys.Alt | Keys.F4:
                     Close();
                     return true;
-
                 case Keys.Back:
                     ActiveWindow?.GoUpOneLevel();
                     return true;
-
                 case Keys.Control | Keys.R:
                     ActiveWindow?.RefreshView();
                     return true;
-
                 case Keys.Right:
                     ActiveWindow?.ExpandCurrentTreeNode();
                     return true;
-
                 case Keys.Left:
                     ActiveWindow?.CollapseCurrentTreeNode();
                     return true;
-
                 case Keys.Control | Keys.D1:
                     ActiveWindow?.SetView(View.LargeIcon);
                     return true;
-
                 case Keys.Control | Keys.D2:
                     ActiveWindow?.SetView(View.SmallIcon);
                     return true;
-
                 case Keys.Control | Keys.D3:
                     ActiveWindow?.SetView(View.List);
                     return true;
-
                 case Keys.Control | Keys.D4:
                     ActiveWindow?.SetView(View.Details);
                     return true;
-
                 default:
                     return false;
             }
@@ -242,17 +243,16 @@ namespace RetroNtFileManager
             {
                 MdiParent = this
             };
+
             child.Show();
         }
 
         private void ShowAboutDialog()
         {
-            MessageBox.Show(
-                this,
-                "Retro NT File Manager\n\nC# / WinForms Projekt für Visual Studio 2022\nmit klassischer Windows-NT-4.0-Anmutung und Kernfunktionen.",
-                "Über File Manager",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+            using (AboutDialog dialog = new AboutDialog())
+            {
+                dialog.ShowDialog(this);
+            }
         }
 
         private DirectoryWindowForm ActiveWindow => ActiveMdiChild as DirectoryWindowForm;
@@ -280,10 +280,56 @@ namespace RetroNtFileManager
 
         private void UpdateWindowTitle()
         {
-            string path = ActiveWindow?.CurrentPath;
-            Text = string.IsNullOrWhiteSpace(path)
-                ? "File Manager"
-                : $"File Manager - {path}";
+            // In Version 1.1 soll die Titelleiste bewusst stabil bleiben.
+            // Der aktuell geöffnete Pfad gehört in die Arbeitsoberfläche,
+            // nicht in die Haupttitelzeile des Produkts.
+            Text = ProductInfo.MainWindowTitle;
+        }
+
+        private void RestoreWindowLayout()
+        {
+            WindowLayoutSettings layout = _appSettings?.MainWindow;
+            if (layout == null)
+            {
+                ApplyDefaultWindowLayout();
+                return;
+            }
+
+            Rectangle requestedBounds = layout.ToRectangle();
+            Rectangle safeBounds = WindowLayoutHelper.GetSafeBounds(requestedBounds, MinimumSize, ProductInfo.DefaultMainWindowSize);
+
+            Bounds = safeBounds;
+            WindowState = layout.GetSafeWindowState();
+            UpdateWindowTitle();
+        }
+
+        private void ApplyDefaultWindowLayout()
+        {
+            Rectangle defaultBounds = WindowLayoutHelper.GetCenteredPrimaryBounds(ProductInfo.DefaultMainWindowSize, MinimumSize);
+            Bounds = defaultBounds;
+            WindowState = FormWindowState.Maximized;
+            UpdateWindowTitle();
+        }
+
+        private void SaveWindowLayout()
+        {
+            if (_appSettings == null)
+            {
+                return;
+            }
+
+            Rectangle boundsToPersist = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+
+            _appSettings.MainWindow = new WindowLayoutSettings
+            {
+                X = boundsToPersist.X,
+                Y = boundsToPersist.Y,
+                Width = boundsToPersist.Width,
+                Height = boundsToPersist.Height,
+                WindowState = WindowState == FormWindowState.Minimized ? FormWindowState.Normal : WindowState
+            };
+
+            AppSettingsStore.Save(_appSettings);
         }
     }
 }

@@ -1,15 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net48</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>RetroNtFileManager</RootNamespace>
     <AssemblyName>RetroNtFileManager</AssemblyName>
-    <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Nullable>disable</Nullable>
+    <Version>1.1.0-alpha.1</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <InformationalVersion>1.1.0-alpha.1</InformationalVersion>
   </PropertyGroup>
-
   <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
   </ItemGroup>

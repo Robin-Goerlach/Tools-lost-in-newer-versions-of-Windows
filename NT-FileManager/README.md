@@ -4,8 +4,8 @@ Dieses Paket enthält ein Visual-Studio-2022-Projekt in C# / WinForms, das den k
 
 ## Inhalt
 
-- `RetroNtFileManager.sln` – Visual-Studio-Lösung
-- `RetroNtFileManager/RetroNtFileManager.csproj` – Projektdatei
+- `NT-FileManager.sln` – Visual-Studio-Lösung
+- `NT-FileManager/NT-FileManager.csproj` – Projektdatei
 - WinForms-Quellcode für MDI-Hauptfenster, Verzeichnisfenster, Dateiansicht, Dateioperationen und Eigenschaften-Dialog
 
 ## Umgesetzte Funktionen
@@ -31,7 +31,9 @@ Dieses Paket enthält ein Visual-Studio-2022-Projekt in C# / WinForms, das den k
 
 ## Start
 
-1. Lösung `RetroNtFileManager.sln` in Visual Studio 2022 öffnen.
+1. Lösung `NT-FileManager.sln` in Visual Studio 2022 öffnen.
 2. Wiederherstellen/Build ausführen.
 3. Projekt starten.
 
+https://github.com/microsoft/winfile
+https://apps.microsoft.com/detail/9p7vbbbc49rb?hl=en-GB&gl=DE
