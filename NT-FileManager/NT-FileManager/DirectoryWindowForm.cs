@@ -330,6 +330,41 @@ namespace RetroNtFileManager
             Status("Ansicht aktualisiert");
         }
 
+        public void CopyCurrentPathAsWindowsPath()
+        {
+            CopyPathToClipboard(CurrentPath, linuxStyle: false);
+        }
+
+        public void CopyCurrentPathAsLinuxPath()
+        {
+            CopyPathToClipboard(CurrentPath, linuxStyle: true);
+        }
+
+        public void CopySelectedEntryPathAsWindowsPath()
+        {
+            string path = GetSelectedPaths().FirstOrDefault() ?? CurrentPath;
+            CopyPathToClipboard(path, linuxStyle: false);
+        }
+
+        public void CopySelectedEntryPathAsLinuxPath()
+        {
+            string path = GetSelectedPaths().FirstOrDefault() ?? CurrentPath;
+            CopyPathToClipboard(path, linuxStyle: true);
+        }
+
+        public void OpenCommandPromptHere()
+        {
+            try
+            {
+                ShellLaunchHelper.OpenCommandPrompt(CurrentPath);
+                Status($"CMD geöffnet: {CurrentPath}");
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+        }
+
         public void ExpandCurrentTreeNode()
         {
             if (_treeView.SelectedNode == null)
@@ -570,6 +605,10 @@ namespace RetroNtFileManager
             menu.Items.Add("Umbenennen", null, (_, __) => RenameSelectedEntry());
             menu.Items.Add("Löschen", null, (_, __) => DeleteSelectedEntry());
             menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Pfad als Windows-Pfad kopieren", null, (_, __) => CopySelectedEntryPathAsWindowsPath());
+            menu.Items.Add("Pfad als Linux-/WSL-Pfad kopieren", null, (_, __) => CopySelectedEntryPathAsLinuxPath());
+            menu.Items.Add("CMD hier öffnen", null, (_, __) => OpenCommandPromptHere());
+            menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Eigenschaften", null, (_, __) => ShowPropertiesForSelection());
             return menu;
         }
@@ -671,6 +710,29 @@ namespace RetroNtFileManager
             _treeView.SelectedNode.Nodes.Clear();
             _treeView.SelectedNode.Nodes.Add(new TreeNode());
             LoadChildNodes(_treeView.SelectedNode);
+        }
+
+        private void CopyPathToClipboard(string path, bool linuxStyle)
+        {
+            try
+            {
+                string normalizedPath = linuxStyle
+                    ? PathClipboardHelper.ToLinuxPath(path)
+                    : PathClipboardHelper.ToWindowsPath(path);
+
+                if (string.IsNullOrWhiteSpace(normalizedPath))
+                {
+                    ShowError("Es konnte kein Pfad in die Zwischenablage kopiert werden.");
+                    return;
+                }
+
+                Clipboard.SetText(normalizedPath);
+                Status($"Pfad kopiert: {normalizedPath}");
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
         }
 
         private List<string> GetSelectedPaths()
@@ -783,7 +845,7 @@ namespace RetroNtFileManager
 
         private void ShowError(string message)
         {
-            MessageBox.Show(this, message, "File Manager", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(this, message, ProductInfo.ProductDisplayName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             Status(message);
         }
 
@@ -879,6 +941,22 @@ namespace RetroNtFileManager
 
         private void ListView_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Control && e.Shift && e.KeyCode == Keys.C)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                CopySelectedEntryPathAsWindowsPath();
+                return;
+            }
+
+            if (e.Control && e.Shift && e.KeyCode == Keys.L)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                CopySelectedEntryPathAsLinuxPath();
+                return;
+            }
+
             switch (e.KeyCode)
             {
                 case Keys.Enter:
