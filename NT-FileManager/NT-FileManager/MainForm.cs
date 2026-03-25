@@ -76,6 +76,10 @@ namespace RetroNtFileManager
             ToolStripMenuItem diskMenu = new ToolStripMenuItem("&Datenträger");
             diskMenu.DropDownItems.Add(CreateItem("Nach oben", "Backspace", (_, __) => ActiveWindow?.GoUpOneLevel()));
             diskMenu.DropDownItems.Add(CreateItem("A&ktualisieren", "Ctrl+R", (_, __) => ActiveWindow?.RefreshView()));
+            diskMenu.DropDownItems.Add(new ToolStripSeparator());
+            diskMenu.DropDownItems.Add(CreateItem("Pfad als &Windows-Pfad kopieren", "Ctrl+Shift+C", (_, __) => ActiveWindow?.CopyCurrentPathAsWindowsPath()));
+            diskMenu.DropDownItems.Add(CreateItem("Pfad als &Linux-/WSL-Pfad kopieren", "Ctrl+Shift+L", (_, __) => ActiveWindow?.CopyCurrentPathAsLinuxPath()));
+            diskMenu.DropDownItems.Add(CreateItem("&CMD hier öffnen", "Ctrl+Shift+K", (_, __) => ActiveWindow?.OpenCommandPromptHere()));
 
             ToolStripMenuItem treeMenu = new ToolStripMenuItem("&Baum");
             treeMenu.DropDownItems.Add(CreateItem("Verzweigung &erweitern", "Right", (_, __) => ActiveWindow?.ExpandCurrentTreeNode()));
@@ -141,6 +145,9 @@ namespace RetroNtFileManager
             toolStrip.Items.Add(new ToolStripSeparator());
             toolStrip.Items.Add(CreateButton("Nach oben", (_, __) => ActiveWindow?.GoUpOneLevel()));
             toolStrip.Items.Add(CreateButton("Aktualisieren", (_, __) => ActiveWindow?.RefreshView()));
+            toolStrip.Items.Add(new ToolStripSeparator());
+            toolStrip.Items.Add(CreateButton("Pfad", (_, __) => ActiveWindow?.CopyCurrentPathAsWindowsPath()));
+            toolStrip.Items.Add(CreateButton("CMD", (_, __) => ActiveWindow?.OpenCommandPromptHere()));
 
             return toolStrip;
         }
@@ -213,6 +220,15 @@ namespace RetroNtFileManager
                     return true;
                 case Keys.Control | Keys.R:
                     ActiveWindow?.RefreshView();
+                    return true;
+                case Keys.Control | Keys.Shift | Keys.C:
+                    ActiveWindow?.CopyCurrentPathAsWindowsPath();
+                    return true;
+                case Keys.Control | Keys.Shift | Keys.L:
+                    ActiveWindow?.CopyCurrentPathAsLinuxPath();
+                    return true;
+                case Keys.Control | Keys.Shift | Keys.K:
+                    ActiveWindow?.OpenCommandPromptHere();
                     return true;
                 case Keys.Right:
                     ActiveWindow?.ExpandCurrentTreeNode();
