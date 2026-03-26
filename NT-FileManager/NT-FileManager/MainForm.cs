@@ -26,15 +26,14 @@ namespace RetroNtFileManager
 
             _menuStrip = BuildMenuStrip();
             _toolStrip = BuildToolStrip();
+
             _statusStrip = new StatusStrip();
             _statusLabel = new ToolStripStatusLabel("Bereit");
-
             _statusStrip.Items.Add(_statusLabel);
 
             Controls.Add(_statusStrip);
             Controls.Add(_toolStrip);
             Controls.Add(_menuStrip);
-
             MainMenuStrip = _menuStrip;
 
             Load += OnMainFormLoad;
@@ -61,6 +60,7 @@ namespace RetroNtFileManager
 
             ToolStripMenuItem fileMenu = new ToolStripMenuItem("&Datei");
             fileMenu.DropDownItems.Add(CreateItem("&Neues Fenster", "Ctrl+N", (_, __) => OpenNewWindow(GetCurrentDirectory())));
+            fileMenu.DropDownItems.Add(CreateItem("&Aktives Fenster duplizieren", "Ctrl+Shift+D", (_, __) => OpenNewWindow(GetCurrentDirectory())));
             fileMenu.DropDownItems.Add(CreateItem("&Öffnen", "Enter", (_, __) => ActiveWindow?.OpenSelectedEntry()));
             fileMenu.DropDownItems.Add(new ToolStripSeparator());
             fileMenu.DropDownItems.Add(CreateItem("&Kopieren...", "F5", (_, __) => ActiveWindow?.CopySelectedEntry()));
@@ -109,10 +109,14 @@ namespace RetroNtFileManager
             optionsMenu.DropDownItems.Add(fullRowSelectItem);
 
             ToolStripMenuItem windowMenu = new ToolStripMenuItem("&Fenster");
-            windowMenu.DropDownItems.Add(CreateItem("&Überlappend", null, (_, __) => LayoutMdi(MdiLayout.Cascade)));
-            windowMenu.DropDownItems.Add(CreateItem("&Nebeneinander", null, (_, __) => LayoutMdi(MdiLayout.TileVertical)));
-            windowMenu.DropDownItems.Add(CreateItem("&Untereinander", null, (_, __) => LayoutMdi(MdiLayout.TileHorizontal)));
-            windowMenu.DropDownItems.Add(CreateItem("Symbole anordnen", null, (_, __) => LayoutMdi(MdiLayout.ArrangeIcons)));
+            windowMenu.DropDownItems.Add(CreateItem("&Nächstes Fenster", "Ctrl+Tab", (_, __) => ActivateNextWindow()));
+            windowMenu.DropDownItems.Add(CreateItem("&Vorheriges Fenster", "Ctrl+Shift+Tab", (_, __) => ActivatePreviousWindow()));
+            windowMenu.DropDownItems.Add(CreateItem("Aktives Fenster &schließen", "Ctrl+W", (_, __) => CloseActiveWindow()));
+            windowMenu.DropDownItems.Add(new ToolStripSeparator());
+            windowMenu.DropDownItems.Add(CreateItem("&Überlappend", "Ctrl+Alt+C", (_, __) => ApplyMdiLayout(MdiLayout.Cascade, "Fenster überlappend angeordnet")));
+            windowMenu.DropDownItems.Add(CreateItem("&Nebeneinander", "Ctrl+Alt+V", (_, __) => ApplyMdiLayout(MdiLayout.TileVertical, "Fenster nebeneinander angeordnet")));
+            windowMenu.DropDownItems.Add(CreateItem("&Untereinander", "Ctrl+Alt+H", (_, __) => ApplyMdiLayout(MdiLayout.TileHorizontal, "Fenster untereinander angeordnet")));
+            windowMenu.DropDownItems.Add(CreateItem("Symbole anordnen", null, (_, __) => ApplyMdiLayout(MdiLayout.ArrangeIcons, "Minimierte Fenster neu angeordnet")));
 
             ToolStripMenuItem helpMenu = new ToolStripMenuItem("&Hilfe");
             helpMenu.DropDownItems.Add(CreateItem("&Über SASD - Filemanager...", null, (_, __) => ShowAboutDialog()));
@@ -135,19 +139,28 @@ namespace RetroNtFileManager
         {
             ToolStrip toolStrip = new ToolStrip();
 
-            toolStrip.Items.Add(CreateButton("Neu", (_, __) => OpenNewWindow(GetCurrentDirectory())));
-            toolStrip.Items.Add(CreateButton("Öffnen", (_, __) => ActiveWindow?.OpenSelectedEntry()));
+            toolStrip.Items.Add(CreateButton("Neu", (_, __) => OpenNewWindow(GetCurrentDirectory()), "Neues Fenster im aktuellen Verzeichnis"));
+            toolStrip.Items.Add(CreateButton("Öffnen", (_, __) => ActiveWindow?.OpenSelectedEntry(), "Ausgewählten Eintrag öffnen"));
             toolStrip.Items.Add(new ToolStripSeparator());
-            toolStrip.Items.Add(CreateButton("Kopieren", (_, __) => ActiveWindow?.CopySelectedEntry()));
-            toolStrip.Items.Add(CreateButton("Verschieben", (_, __) => ActiveWindow?.MoveSelectedEntry()));
-            toolStrip.Items.Add(CreateButton("Löschen", (_, __) => ActiveWindow?.DeleteSelectedEntry()));
-            toolStrip.Items.Add(CreateButton("Ordner", (_, __) => ActiveWindow?.CreateFolder()));
+
+            toolStrip.Items.Add(CreateButton("Kopieren", (_, __) => ActiveWindow?.CopySelectedEntry(), "Ausgewählte Einträge kopieren"));
+            toolStrip.Items.Add(CreateButton("Verschieben", (_, __) => ActiveWindow?.MoveSelectedEntry(), "Ausgewählte Einträge verschieben"));
+            toolStrip.Items.Add(CreateButton("Löschen", (_, __) => ActiveWindow?.DeleteSelectedEntry(), "Ausgewählte Einträge löschen"));
+            toolStrip.Items.Add(CreateButton("Ordner", (_, __) => ActiveWindow?.CreateFolder(), "Neuen Ordner anlegen"));
             toolStrip.Items.Add(new ToolStripSeparator());
-            toolStrip.Items.Add(CreateButton("Nach oben", (_, __) => ActiveWindow?.GoUpOneLevel()));
-            toolStrip.Items.Add(CreateButton("Aktualisieren", (_, __) => ActiveWindow?.RefreshView()));
+
+            toolStrip.Items.Add(CreateButton("Nach oben", (_, __) => ActiveWindow?.GoUpOneLevel(), "Eine Ebene nach oben wechseln"));
+            toolStrip.Items.Add(CreateButton("Aktualisieren", (_, __) => ActiveWindow?.RefreshView(), "Aktives Verzeichnis aktualisieren"));
             toolStrip.Items.Add(new ToolStripSeparator());
-            toolStrip.Items.Add(CreateButton("Pfad", (_, __) => ActiveWindow?.CopyCurrentPathAsWindowsPath()));
-            toolStrip.Items.Add(CreateButton("CMD", (_, __) => ActiveWindow?.OpenCommandPromptHere()));
+
+            toolStrip.Items.Add(CreateButton("Pfad", (_, __) => ActiveWindow?.CopyCurrentPathAsWindowsPath(), "Aktuellen Pfad im Windows-Format kopieren"));
+            toolStrip.Items.Add(CreateButton("Linux", (_, __) => ActiveWindow?.CopyCurrentPathAsLinuxPath(), "Aktuellen Pfad im Linux-/WSL-Format kopieren"));
+            toolStrip.Items.Add(CreateButton("CMD", (_, __) => ActiveWindow?.OpenCommandPromptHere(), "CMD im aktuellen Verzeichnis öffnen"));
+            toolStrip.Items.Add(new ToolStripSeparator());
+
+            toolStrip.Items.Add(CreateButton("Kaskade", (_, __) => ApplyMdiLayout(MdiLayout.Cascade, "Fenster überlappend angeordnet"), "Fenster überlappend anordnen"));
+            toolStrip.Items.Add(CreateButton("Links/Rechts", (_, __) => ApplyMdiLayout(MdiLayout.TileVertical, "Fenster nebeneinander angeordnet"), "Fenster nebeneinander anordnen"));
+            toolStrip.Items.Add(CreateButton("Oben/Unten", (_, __) => ApplyMdiLayout(MdiLayout.TileHorizontal, "Fenster untereinander angeordnet"), "Fenster untereinander anordnen"));
 
             return toolStrip;
         }
@@ -163,12 +176,13 @@ namespace RetroNtFileManager
             return item;
         }
 
-        private ToolStripButton CreateButton(string text, EventHandler handler)
+        private ToolStripButton CreateButton(string text, EventHandler handler, string toolTipText = null)
         {
             ToolStripButton button = new ToolStripButton(text)
             {
                 DisplayStyle = ToolStripItemDisplayStyle.Text,
-                AutoSize = true
+                AutoSize = true,
+                ToolTipText = toolTipText ?? text
             };
             button.Click += handler;
             return button;
@@ -191,63 +205,111 @@ namespace RetroNtFileManager
                 case Keys.Control | Keys.N:
                     OpenNewWindow(GetCurrentDirectory());
                     return true;
+
+                case Keys.Control | Keys.Shift | Keys.D:
+                    OpenNewWindow(GetCurrentDirectory());
+                    return true;
+
                 case Keys.Enter:
                     ActiveWindow?.OpenSelectedEntry();
                     return true;
+
                 case Keys.F5:
                     ActiveWindow?.CopySelectedEntry();
                     return true;
+
                 case Keys.F6:
                     ActiveWindow?.MoveSelectedEntry();
                     return true;
+
                 case Keys.F2:
                     ActiveWindow?.RenameSelectedEntry();
                     return true;
+
                 case Keys.Delete:
                     ActiveWindow?.DeleteSelectedEntry();
                     return true;
+
                 case Keys.Control | Keys.Shift | Keys.N:
                     ActiveWindow?.CreateFolder();
                     return true;
+
                 case Keys.Alt | Keys.Enter:
                     ActiveWindow?.ShowPropertiesForSelection();
                     return true;
+
                 case Keys.Alt | Keys.F4:
                     Close();
                     return true;
+
                 case Keys.Back:
                     ActiveWindow?.GoUpOneLevel();
                     return true;
+
                 case Keys.Control | Keys.R:
                     ActiveWindow?.RefreshView();
                     return true;
+
                 case Keys.Control | Keys.Shift | Keys.C:
                     ActiveWindow?.CopyCurrentPathAsWindowsPath();
                     return true;
+
                 case Keys.Control | Keys.Shift | Keys.L:
                     ActiveWindow?.CopyCurrentPathAsLinuxPath();
                     return true;
+
                 case Keys.Control | Keys.Shift | Keys.K:
                     ActiveWindow?.OpenCommandPromptHere();
                     return true;
+
                 case Keys.Right:
                     ActiveWindow?.ExpandCurrentTreeNode();
                     return true;
+
                 case Keys.Left:
                     ActiveWindow?.CollapseCurrentTreeNode();
                     return true;
+
                 case Keys.Control | Keys.D1:
                     ActiveWindow?.SetView(View.LargeIcon);
                     return true;
+
                 case Keys.Control | Keys.D2:
                     ActiveWindow?.SetView(View.SmallIcon);
                     return true;
+
                 case Keys.Control | Keys.D3:
                     ActiveWindow?.SetView(View.List);
                     return true;
+
                 case Keys.Control | Keys.D4:
                     ActiveWindow?.SetView(View.Details);
                     return true;
+
+                case Keys.Control | Keys.Tab:
+                    ActivateNextWindow();
+                    return true;
+
+                case Keys.Control | Keys.Shift | Keys.Tab:
+                    ActivatePreviousWindow();
+                    return true;
+
+                case Keys.Control | Keys.W:
+                    CloseActiveWindow();
+                    return true;
+
+                case Keys.Control | Keys.Alt | Keys.C:
+                    ApplyMdiLayout(MdiLayout.Cascade, "Fenster überlappend angeordnet");
+                    return true;
+
+                case Keys.Control | Keys.Alt | Keys.V:
+                    ApplyMdiLayout(MdiLayout.TileVertical, "Fenster nebeneinander angeordnet");
+                    return true;
+
+                case Keys.Control | Keys.Alt | Keys.H:
+                    ApplyMdiLayout(MdiLayout.TileHorizontal, "Fenster untereinander angeordnet");
+                    return true;
+
                 default:
                     return false;
             }
@@ -259,8 +321,9 @@ namespace RetroNtFileManager
             {
                 MdiParent = this
             };
-
             child.Show();
+            child.Activate();
+            SetStatus($"Neues Fenster geöffnet: {path}");
         }
 
         private void ShowAboutDialog()
@@ -269,6 +332,69 @@ namespace RetroNtFileManager
             {
                 dialog.ShowDialog(this);
             }
+        }
+
+        private void ActivateNextWindow()
+        {
+            CycleWindows(forward: true);
+        }
+
+        private void ActivatePreviousWindow()
+        {
+            CycleWindows(forward: false);
+        }
+
+        private void CycleWindows(bool forward)
+        {
+            Form[] windows = MdiChildren;
+            if (windows == null || windows.Length == 0)
+            {
+                return;
+            }
+
+            if (windows.Length == 1)
+            {
+                windows[0].Activate();
+                return;
+            }
+
+            Form active = ActiveMdiChild;
+            int currentIndex = Array.IndexOf(windows, active);
+            if (currentIndex < 0)
+            {
+                windows[0].Activate();
+                return;
+            }
+
+            int nextIndex = forward
+                ? (currentIndex + 1) % windows.Length
+                : (currentIndex - 1 + windows.Length) % windows.Length;
+
+            windows[nextIndex].Activate();
+            SetStatus(forward ? "Zum nächsten Fenster gewechselt" : "Zum vorherigen Fenster gewechselt");
+        }
+
+        private void CloseActiveWindow()
+        {
+            if (ActiveMdiChild == null)
+            {
+                return;
+            }
+
+            string title = ActiveMdiChild.Text;
+            ActiveMdiChild.Close();
+            SetStatus($"Fenster geschlossen: {title}");
+        }
+
+        private void ApplyMdiLayout(MdiLayout layout, string statusText)
+        {
+            if (MdiChildren.Length == 0)
+            {
+                return;
+            }
+
+            LayoutMdi(layout);
+            SetStatus(statusText);
         }
 
         private DirectoryWindowForm ActiveWindow => ActiveMdiChild as DirectoryWindowForm;
@@ -313,7 +439,6 @@ namespace RetroNtFileManager
 
             Rectangle requestedBounds = layout.ToRectangle();
             Rectangle safeBounds = WindowLayoutHelper.GetSafeBounds(requestedBounds, MinimumSize, ProductInfo.DefaultMainWindowSize);
-
             Bounds = safeBounds;
             WindowState = layout.GetSafeWindowState();
             UpdateWindowTitle();
@@ -335,7 +460,6 @@ namespace RetroNtFileManager
             }
 
             Rectangle boundsToPersist = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
-
             _appSettings.MainWindow = new WindowLayoutSettings
             {
                 X = boundsToPersist.X,
