@@ -6,12 +6,21 @@ using System.Xml.Serialization;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Wurzelobjekt für anwendungsweite Einstellungen.
+    /// </summary>
     [Serializable]
     public sealed class AppSettings
     {
+        /// <summary>
+        /// Gespeichertes Layout des Hauptfensters.
+        /// </summary>
         public WindowLayoutSettings MainWindow { get; set; }
     }
 
+    /// <summary>
+    /// Serialisierbares Datenmodell für die Lage und Größe eines Fensters.
+    /// </summary>
     [Serializable]
     public sealed class WindowLayoutSettings
     {
@@ -21,11 +30,17 @@ namespace RetroNtFileManager
         public int Height { get; set; }
         public FormWindowState WindowState { get; set; }
 
+        /// <summary>
+        /// Wandelt die gespeicherten Koordinaten in ein Rectangle um.
+        /// </summary>
         public Rectangle ToRectangle()
         {
             return new Rectangle(X, Y, Width, Height);
         }
 
+        /// <summary>
+        /// Verhindert die Wiederherstellung eines minimierten Zustands beim nächsten Start.
+        /// </summary>
         public FormWindowState GetSafeWindowState()
         {
             if (WindowState == FormWindowState.Minimized)
@@ -39,10 +54,19 @@ namespace RetroNtFileManager
         }
     }
 
+    /// <summary>
+    /// Lädt und speichert die Anwendungseinstellungen als XML-Datei im LocalAppData-Bereich.
+    /// </summary>
     internal static class AppSettingsStore
     {
+        /// <summary>
+        /// Zentraler Serializer für die AppSettings-Datei.
+        /// </summary>
         private static readonly XmlSerializer Serializer = new XmlSerializer(typeof(AppSettings));
 
+        /// <summary>
+        /// Lädt die Einstellungen von Datenträger oder liefert ein leeres Standardobjekt.
+        /// </summary>
         public static AppSettings Load()
         {
             try
@@ -60,12 +84,19 @@ namespace RetroNtFileManager
             }
             catch
             {
-                // Die Anwendung soll auch dann starten können, wenn die Settings-Datei
-                // beschädigt wurde oder vorübergehend nicht gelesen werden kann.
+                // Die Anwendung soll auch dann starten können, wenn die Settings-Datei beschädigt ist.
                 return new AppSettings();
             }
         }
 
+        /// <summary>
+        /// Speichert die Einstellungen auf Datenträger.
+        /// </summary>
+        /// <param name="settings">Zu speicherndes Einstellungsobjekt.</param>
+        /// <summary>
+        /// Speichert die Einstellungen auf Datenträger.
+        /// </summary>
+        /// <param name="settings">Zu speicherndes Einstellungsobjekt.</param>
         public static void Save(AppSettings settings)
         {
             if (settings == null)
@@ -85,11 +116,13 @@ namespace RetroNtFileManager
             }
             catch
             {
-                // Fehler beim Speichern sollen den Anwendungsschluss nicht blockieren.
-                // Später kann hier Logging ergänzt werden.
+                // Fehler beim Speichern dürfen den Programmabbruch nicht blockieren.
             }
         }
 
+        /// <summary>
+        /// Ermittelt den festen Ablageort der XML-Einstellungsdatei.
+        /// </summary>
         private static string GetSettingsFilePath()
         {
             string baseDirectory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -97,8 +130,14 @@ namespace RetroNtFileManager
         }
     }
 
+    /// <summary>
+    /// Kapselt Hilfslogik für sichere Fensterpositionen auf wechselnden Monitor-Setups.
+    /// </summary>
     internal static class WindowLayoutHelper
     {
+        /// <summary>
+        /// Liefert sichere Fenstergrenzen für den aktuellen Monitorverbund.
+        /// </summary>
         public static Rectangle GetSafeBounds(Rectangle requestedBounds, Size minimumSize, Size fallbackSize)
         {
             Rectangle candidate = NormalizeBounds(requestedBounds, minimumSize, fallbackSize);
@@ -108,9 +147,13 @@ namespace RetroNtFileManager
                 return candidate;
             }
 
+            // Fallback auf eine zentrierte, sichtbare Position, falls das gespeicherte Layout off-screen liegt.
             return GetCenteredPrimaryBounds(fallbackSize, minimumSize);
         }
 
+        /// <summary>
+        /// Berechnet eine zentrierte Standardposition auf dem primären Bildschirm.
+        /// </summary>
         public static Rectangle GetCenteredPrimaryBounds(Size desiredSize, Size minimumSize)
         {
             Rectangle workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1600, 900);
@@ -122,6 +165,9 @@ namespace RetroNtFileManager
             return new Rectangle(x, y, width, height);
         }
 
+        /// <summary>
+        /// Stellt sicher, dass das gespeicherte Rechteck sinnvolle Mindestwerte besitzt.
+        /// </summary>
         private static Rectangle NormalizeBounds(Rectangle bounds, Size minimumSize, Size fallbackSize)
         {
             int width = bounds.Width > 0 ? bounds.Width : fallbackSize.Width;
@@ -133,6 +179,9 @@ namespace RetroNtFileManager
             return new Rectangle(bounds.X, bounds.Y, width, height);
         }
 
+        /// <summary>
+        /// Prüft, ob sich das angegebene Fensterrechteck zumindest teilweise auf einem sichtbaren Bildschirm befindet.
+        /// </summary>
         private static bool IsVisibleOnAnyScreen(Rectangle bounds)
         {
             foreach (Screen screen in Screen.AllScreens)

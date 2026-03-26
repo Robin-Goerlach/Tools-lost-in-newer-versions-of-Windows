@@ -5,8 +5,14 @@ using System.Windows.Forms;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Zeigt Produktinformationen, Versionsdaten und weiterführende Links an.
+    /// </summary>
     internal sealed class AboutDialog : Form
     {
+        /// <summary>
+        /// Initialisiert den About-Dialog und erstellt die komplette Oberfläche programmatisch.
+        /// </summary>
         public AboutDialog()
         {
             Text = "Über SASD - Filemanager";
@@ -17,6 +23,7 @@ namespace RetroNtFileManager
             ShowInTaskbar = false;
             ClientSize = new Size(520, 300);
 
+            // Das Layout bleibt bewusst einfach, ruhig und stabil, damit der Dialog wie ein klassisches Systemfenster wirkt.
             TableLayoutPanel layout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -105,6 +112,18 @@ namespace RetroNtFileManager
             ClassicTheme.Apply(this);
         }
 
+        /// <summary>
+        /// Erstellt einen anklickbaren Hyperlink für den Dialog.
+        /// </summary>
+        /// <param name="caption">Anzuzeigender Linktext.</param>
+        /// <param name="targetUrl">Ziel-URL, die im Browser geöffnet werden soll.</param>
+        /// <returns>Fertig konfigurierter LinkLabel-Steuereintrag.</returns>
+        /// <summary>
+        /// Erstellt einen anklickbaren Hyperlink für den Dialog.
+        /// </summary>
+        /// <param name="caption">Anzuzeigender Linktext.</param>
+        /// <param name="targetUrl">Ziel-URL, die im Browser geöffnet werden soll.</param>
+        /// <returns>Fertig konfigurierter LinkLabel-Steuereintrag.</returns>
         private static LinkLabel CreateLink(string caption, string targetUrl)
         {
             LinkLabel link = new LinkLabel
@@ -118,6 +137,14 @@ namespace RetroNtFileManager
             return link;
         }
 
+        /// <summary>
+        /// Öffnet eine URL über die Shell des Betriebssystems.
+        /// </summary>
+        /// <param name="url">Zu öffnende Adresse.</param>
+        /// <summary>
+        /// Öffnet eine URL über die Shell des Betriebssystems.
+        /// </summary>
+        /// <param name="url">Zu öffnende Adresse.</param>
         private static void OpenUrl(string url)
         {
             try
@@ -130,6 +157,7 @@ namespace RetroNtFileManager
             }
             catch (Exception ex)
             {
+                // Der Dialog bleibt benutzbar, auch wenn die Zielanwendung oder die URL nicht erreichbar ist.
                 MessageBox.Show(
                     "Der Link konnte nicht geöffnet werden.\r\n\r\n" + ex.Message,
                     "Link öffnen",

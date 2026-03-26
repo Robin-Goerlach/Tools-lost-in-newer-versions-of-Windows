@@ -4,8 +4,14 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Kapselt Dateisystemoperationen für Dateien und Verzeichnisse.
+    /// </summary>
     internal static class FileSystemOperations
     {
+        /// <summary>
+        /// Kopiert eine Datei oder ein Verzeichnis in ein Zielverzeichnis.
+        /// </summary>
         public static void CopyEntry(string sourcePath, string destinationDirectory)
         {
             if (File.Exists(sourcePath))
@@ -25,6 +31,9 @@ namespace RetroNtFileManager
             throw new FileNotFoundException("Quelle wurde nicht gefunden.", sourcePath);
         }
 
+        /// <summary>
+        /// Verschiebt eine Datei oder ein Verzeichnis in ein Zielverzeichnis.
+        /// </summary>
         public static void MoveEntry(string sourcePath, string destinationDirectory)
         {
             if (File.Exists(sourcePath))
@@ -35,6 +44,7 @@ namespace RetroNtFileManager
                     return;
                 }
 
+                // Bestehende Zieldateien werden im aktuellen Verhalten bewusst ersetzt.
                 if (File.Exists(targetPath))
                 {
                     File.Delete(targetPath);
@@ -64,6 +74,9 @@ namespace RetroNtFileManager
             throw new FileNotFoundException("Quelle wurde nicht gefunden.", sourcePath);
         }
 
+        /// <summary>
+        /// Löscht eine Datei oder ein Verzeichnis über den Papierkorb.
+        /// </summary>
         public static void DeleteEntry(string path)
         {
             if (File.Exists(path))
@@ -81,6 +94,9 @@ namespace RetroNtFileManager
             throw new FileNotFoundException("Objekt wurde nicht gefunden.", path);
         }
 
+        /// <summary>
+        /// Benennt eine Datei oder ein Verzeichnis um.
+        /// </summary>
         public static void RenameEntry(string sourcePath, string newName)
         {
             if (string.IsNullOrWhiteSpace(newName))
@@ -106,6 +122,9 @@ namespace RetroNtFileManager
             throw new FileNotFoundException("Objekt wurde nicht gefunden.", sourcePath);
         }
 
+        /// <summary>
+        /// Erstellt im Zielverzeichnis einen eindeutig benannten neuen Ordner.
+        /// </summary>
         public static string CreateNewFolder(string parentDirectory)
         {
             const string baseName = "Neuer Ordner";
@@ -122,6 +141,9 @@ namespace RetroNtFileManager
             return candidate;
         }
 
+        /// <summary>
+        /// Kopiert ein Verzeichnis rekursiv einschließlich aller Unterordner und Dateien.
+        /// </summary>
         private static void CopyDirectory(string sourceDir, string targetDir)
         {
             Directory.CreateDirectory(targetDir);

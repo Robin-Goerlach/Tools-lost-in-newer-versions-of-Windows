@@ -3,8 +3,14 @@ using System.IO;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Normalisiert Pfade für die Zwischenablage in Windows- oder Linux-/WSL-Darstellung.
+    /// </summary>
     internal static class PathClipboardHelper
     {
+        /// <summary>
+        /// Gibt einen vollständigen Windows-Pfad zurück.
+        /// </summary>
         public static string ToWindowsPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -15,6 +21,9 @@ namespace RetroNtFileManager
             return Path.GetFullPath(path);
         }
 
+        /// <summary>
+        /// Wandelt einen Windows-Pfad in eine WSL-kompatible /mnt/...-Darstellung um.
+        /// </summary>
         public static string ToLinuxPath(string path)
         {
             string windowsPath = ToWindowsPath(path);
@@ -26,6 +35,7 @@ namespace RetroNtFileManager
             string root = Path.GetPathRoot(windowsPath);
             if (string.IsNullOrWhiteSpace(root) || root.Length < 2 || root[1] != ':')
             {
+                // Nicht-lokale Pfade werden zumindest slash-normalisiert zurückgegeben.
                 return windowsPath.Replace('\\', '/');
             }
 

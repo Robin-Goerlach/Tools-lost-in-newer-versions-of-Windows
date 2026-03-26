@@ -4,12 +4,24 @@ using System.Windows.Forms;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Einfacher Eingabedialog für Umbenennen und ähnliche Texteingaben.
+    /// </summary>
     internal sealed class PromptDialog : Form
     {
+        /// <summary>
+        /// Zentrales Eingabefeld des Dialogs.
+        /// </summary>
         private readonly TextBox _textBox;
 
+        /// <summary>
+        /// Liefert den getrimmten Eingabewert des Benutzers.
+        /// </summary>
         public string Value => _textBox.Text.Trim();
 
+        /// <summary>
+        /// Erstellt den Dialog mit Titel, Beschriftung und optionalem Initialwert.
+        /// </summary>
         public PromptDialog(string title, string label, string initialValue)
         {
             Text = title;
@@ -20,39 +32,10 @@ namespace RetroNtFileManager
             ShowInTaskbar = false;
             ClientSize = new Size(360, 120);
 
-            Label promptLabel = new Label
-            {
-                AutoSize = true,
-                Left = 12,
-                Top = 12,
-                Text = label
-            };
-
-            _textBox = new TextBox
-            {
-                Left = 12,
-                Top = 34,
-                Width = 332,
-                Text = initialValue ?? string.Empty
-            };
-
-            Button okButton = new Button
-            {
-                Text = "OK",
-                Left = 188,
-                Top = 72,
-                Width = 75,
-                DialogResult = DialogResult.OK
-            };
-
-            Button cancelButton = new Button
-            {
-                Text = "Abbrechen",
-                Left = 269,
-                Top = 72,
-                Width = 75,
-                DialogResult = DialogResult.Cancel
-            };
+            Label promptLabel = new Label { AutoSize = true, Left = 12, Top = 12, Text = label };
+            _textBox = new TextBox { Left = 12, Top = 34, Width = 332, Text = initialValue ?? string.Empty };
+            Button okButton = new Button { Text = "OK", Left = 188, Top = 72, Width = 75, DialogResult = DialogResult.OK };
+            Button cancelButton = new Button { Text = "Abbrechen", Left = 269, Top = 72, Width = 75, DialogResult = DialogResult.Cancel };
 
             AcceptButton = okButton;
             CancelButton = cancelButton;

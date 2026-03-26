@@ -5,8 +5,14 @@ using System.Windows.Forms;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Zeigt Dateisystemeigenschaften für Dateien und Verzeichnisse an.
+    /// </summary>
     internal sealed class PropertiesDialog : Form
     {
+        /// <summary>
+        /// Erstellt den Eigenschaften-Dialog für den angegebenen Pfad.
+        /// </summary>
         public PropertiesDialog(string path)
         {
             Text = "Eigenschaften";
@@ -24,6 +30,7 @@ namespace RetroNtFileManager
                 RowCount = 8,
                 Padding = new Padding(12)
             };
+
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
@@ -32,27 +39,13 @@ namespace RetroNtFileManager
                 Width = 32,
                 Height = 32,
                 SizeMode = PictureBoxSizeMode.CenterImage,
-                Image = (Directory.Exists(path)
-                    ? ShellIconHelper.GetLargeIcon(path, true)
-                    : ShellIconHelper.GetLargeIcon(path, false)).ToBitmap()
+                Image = (Directory.Exists(path) ? ShellIconHelper.GetLargeIcon(path, true) : ShellIconHelper.GetLargeIcon(path, false)).ToBitmap()
             };
 
             Panel headerPanel = new Panel { Dock = DockStyle.Fill, Height = 42 };
-            Label pathLabel = new Label
-            {
-                AutoSize = true,
-                Left = 42,
-                Top = 8,
-                Text = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar))
-            };
-            Label fullPathLabel = new Label
-            {
-                AutoEllipsis = true,
-                Left = 42,
-                Top = 24,
-                Width = 330,
-                Text = path
-            };
+            Label pathLabel = new Label { AutoSize = true, Left = 42, Top = 8, Text = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar)) };
+            Label fullPathLabel = new Label { AutoEllipsis = true, Left = 42, Top = 24, Width = 330, Text = path };
+
             headerPanel.Controls.Add(iconBox);
             headerPanel.Controls.Add(pathLabel);
             headerPanel.Controls.Add(fullPathLabel);
@@ -69,17 +62,8 @@ namespace RetroNtFileManager
             AddRow(layout, 5, "Geändert:", GetModifiedDescription(path));
             AddRow(layout, 6, "Attribute:", GetAttributesDescription(path));
 
-            FlowLayoutPanel buttonPanel = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.RightToLeft,
-                Dock = DockStyle.Fill
-            };
-            Button okButton = new Button
-            {
-                Text = "OK",
-                Width = 75,
-                DialogResult = DialogResult.OK
-            };
+            FlowLayoutPanel buttonPanel = new FlowLayoutPanel { FlowDirection = FlowDirection.RightToLeft, Dock = DockStyle.Fill };
+            Button okButton = new Button { Text = "OK", Width = 75, DialogResult = DialogResult.OK };
             buttonPanel.Controls.Add(okButton);
             layout.Controls.Add(buttonPanel, 0, 7);
             layout.SetColumnSpan(buttonPanel, 2);
@@ -89,27 +73,20 @@ namespace RetroNtFileManager
             ClassicTheme.Apply(this);
         }
 
+        /// <summary>
+        /// Fügt dem Layout eine beschriftete Eigenschaftszeile hinzu.
+        /// </summary>
         private static void AddRow(TableLayoutPanel layout, int row, string label, string value)
         {
-            Label left = new Label
-            {
-                AutoSize = true,
-                Text = label,
-                Margin = new Padding(0, 8, 0, 0)
-            };
-
-            TextBox right = new TextBox
-            {
-                ReadOnly = true,
-                BorderStyle = BorderStyle.FixedSingle,
-                Text = value,
-                Dock = DockStyle.Top
-            };
-
+            Label left = new Label { AutoSize = true, Text = label, Margin = new Padding(0, 8, 0, 0) };
+            TextBox right = new TextBox { ReadOnly = true, BorderStyle = BorderStyle.FixedSingle, Text = value, Dock = DockStyle.Top };
             layout.Controls.Add(left, 0, row);
             layout.Controls.Add(right, 1, row);
         }
 
+        /// <summary>
+        /// Ermittelt die Typbeschreibung für Datei oder Verzeichnis.
+        /// </summary>
         private static string GetTypeDescription(string path)
         {
             if (Directory.Exists(path))
@@ -118,16 +95,20 @@ namespace RetroNtFileManager
             }
 
             string extension = Path.GetExtension(path);
-            return string.IsNullOrWhiteSpace(extension)
-                ? "Datei"
-                : extension.ToUpperInvariant() + "-Datei";
+            return string.IsNullOrWhiteSpace(extension) ? "Datei" : extension.ToUpperInvariant() + "-Datei";
         }
 
+        /// <summary>
+        /// Liefert den Speicherort des Eintrags.
+        /// </summary>
         private static string GetLocation(string path)
         {
             return Path.GetDirectoryName(path) ?? path;
         }
 
+        /// <summary>
+        /// Berechnet eine Größenbeschreibung in Bytes.
+        /// </summary>
         private static string GetSizeDescription(string path)
         {
             if (File.Exists(path))
@@ -149,11 +130,13 @@ namespace RetroNtFileManager
                         }
                         catch
                         {
+                            // Einzelne unzugängliche Dateien sollen die Gesamtberechnung nicht abbrechen.
                         }
                     }
                 }
                 catch
                 {
+                    // Fehler bei rekursiven Verzeichniszugriffen werden im Dialog still toleriert.
                 }
 
                 return $"{total:N0} Bytes";
@@ -162,22 +145,27 @@ namespace RetroNtFileManager
             return string.Empty;
         }
 
+        /// <summary>
+        /// Liest das Erstellungsdatum.
+        /// </summary>
         private static string GetCreatedDescription(string path)
         {
-            return (File.Exists(path)
-                    ? File.GetCreationTime(path)
-                    : Directory.GetCreationTime(path))
+            return (File.Exists(path) ? File.GetCreationTime(path) : Directory.GetCreationTime(path))
                 .ToString("dd.MM.yyyy HH:mm:ss");
         }
 
+        /// <summary>
+        /// Liest das Änderungsdatum.
+        /// </summary>
         private static string GetModifiedDescription(string path)
         {
-            return (File.Exists(path)
-                    ? File.GetLastWriteTime(path)
-                    : Directory.GetLastWriteTime(path))
+            return (File.Exists(path) ? File.GetLastWriteTime(path) : Directory.GetLastWriteTime(path))
                 .ToString("dd.MM.yyyy HH:mm:ss");
         }
 
+        /// <summary>
+        /// Liest die Dateiattribute.
+        /// </summary>
         private static string GetAttributesDescription(string path)
         {
             FileAttributes attributes = File.GetAttributes(path);

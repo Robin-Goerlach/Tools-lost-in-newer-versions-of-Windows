@@ -4,8 +4,19 @@ using System.IO;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Startet Shell-Werkzeuge im Kontext des aktuell aktiven Verzeichnisses.
+    /// </summary>
     internal static class ShellLaunchHelper
     {
+        /// <summary>
+        /// Öffnet eine CMD-Sitzung im angegebenen Arbeitsverzeichnis.
+        /// </summary>
+        /// <param name="workingDirectory">Zielverzeichnis für die Shell.</param>
+        /// <summary>
+        /// Öffnet eine CMD-Sitzung im angegebenen Arbeitsverzeichnis.
+        /// </summary>
+        /// <param name="workingDirectory">Zielverzeichnis für die Shell.</param>
         public static void OpenCommandPrompt(string workingDirectory)
         {
             string directory = NormalizeExistingDirectory(workingDirectory);
@@ -19,6 +30,9 @@ namespace RetroNtFileManager
             });
         }
 
+        /// <summary>
+        /// Liefert ein existierendes Verzeichnis oder einen sicheren Fallback zurück.
+        /// </summary>
         private static string NormalizeExistingDirectory(string path)
         {
             if (string.IsNullOrWhiteSpace(path))

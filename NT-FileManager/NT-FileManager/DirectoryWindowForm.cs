@@ -8,30 +8,103 @@ using System.Windows.Forms;
 
 namespace RetroNtFileManager
 {
+    /// <summary>
+    /// Repräsentiert ein einzelnes Datei-Fenster innerhalb der MDI-Oberfläche.
+    /// Es kombiniert Laufwerkswahl, Baumansicht, Dateiliste, Statusleiste und Kontextaktionen.
+    /// </summary>
     internal sealed class DirectoryWindowForm : Form
     {
+        /// <summary>
+        /// Callback in die Statusleiste des Hauptfensters.
+        /// </summary>
         private readonly Action<string> _statusCallback;
+
+        /// <summary>
+        /// Laufwerksauswahl am oberen Rand des Fensters.
+        /// </summary>
         private readonly ComboBox _driveComboBox;
+
+        /// <summary>
+        /// Direkte Pfadeingabe für Navigation per Tastatur.
+        /// </summary>
         private readonly TextBox _pathTextBox;
+
+        /// <summary>
+        /// Trennt Verzeichnisbaum und Dateiliste.
+        /// </summary>
         private readonly SplitContainer _splitContainer;
+
+        /// <summary>
+        /// Baumansicht für die Ordnerhierarchie.
+        /// </summary>
         private readonly TreeView _treeView;
+
+        /// <summary>
+        /// Dateiliste für Inhalte des aktuellen Verzeichnisses.
+        /// </summary>
         private readonly ListView _listView;
+
+        /// <summary>
+        /// Kleine Symbole für Listen- und Detailansichten.
+        /// </summary>
         private readonly ImageList _smallImageList;
+
+        /// <summary>
+        /// Große Symbole für die Icon-Ansicht.
+        /// </summary>
         private readonly ImageList _largeImageList;
+
+        /// <summary>
+        /// Symbole für den Baum links.
+        /// </summary>
         private readonly ImageList _treeImageList;
+
+        /// <summary>
+        /// Statusleiste des Datei-Fensters.
+        /// </summary>
         private readonly StatusStrip _statusStrip;
+
+        /// <summary>
+        /// Linke Statusspalte für Mengen- und Selektionsangaben.
+        /// </summary>
         private readonly ToolStripStatusLabel _leftStatus;
+
+        /// <summary>
+        /// Rechte Statusspalte für Pfad- und Aktionsmeldungen.
+        /// </summary>
         private readonly ToolStripStatusLabel _rightStatus;
+
+        /// <summary>
+        /// Sortierlogik für die Dateiliste.
+        /// </summary>
         private readonly FileListViewItemComparer _listComparer;
+
+        /// <summary>
+        /// Kontextmenü für Liste und Baum.
+        /// </summary>
         private readonly ContextMenuStrip _contextMenu;
 
+        /// <summary>
+        /// Eigenes Drag&amp;Drop-Datenformat, um Quellfenster intern wiederzuerkennen.
+        /// </summary>
         private const string DragSourceWindowFormat = "SASD.RetroNtFileManager.SourceWindow";
 
+        /// <summary>
+        /// Verhindert rekursive Baum-Events während programmatischer Selektion.
+        /// </summary>
         private bool _synchronizingTreeSelection;
+
+        /// <summary>
+        /// Verhindert rekursive Laufwerkswechsel während programmatischer Auswahl.
+        /// </summary>
         private bool _synchronizingDriveSelection;
 
+        /// <summary>
+        /// Erstellt ein neues Datei-Fenster und initialisiert alle UI-Komponenten.
+        /// </summary>
         public DirectoryWindowForm(string initialPath, Action<string> statusCallback)
         {
+            // Das Datei-Fenster darf auch ohne externen Statushandler laufen.
             _statusCallback = statusCallback ?? (_ => { });
 
             Text = "Datei-Fenster";
@@ -39,6 +112,7 @@ namespace RetroNtFileManager
             Height = 700;
             StartPosition = FormStartPosition.Manual;
 
+            // Drei getrennte ImageLists halten die Symbolgrößen für Liste, Icons und Baum sauber getrennt.
             _smallImageList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(16, 16) };
             _largeImageList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(32, 32) };
             _treeImageList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(16, 16) };
@@ -76,6 +150,7 @@ namespace RetroNtFileManager
             topPanel.Controls.Add(pathLabel);
             topPanel.Controls.Add(_pathTextBox);
 
+            // Die Oberfläche bleibt klassisch: links Baum, rechts Dateien.
             _splitContainer = new SplitContainer
             {
                 Dock = DockStyle.Fill,
@@ -93,6 +168,7 @@ namespace RetroNtFileManager
             _treeView.BeforeExpand += TreeView_BeforeExpand;
             _treeView.AfterSelect += TreeView_AfterSelect;
 
+            // Sortierung, Mehrfachauswahl und Drag&Drop werden direkt an der ListView verdrahtet.
             _listComparer = new FileListViewItemComparer();
             _listView = new ListView
             {
@@ -139,31 +215,45 @@ namespace RetroNtFileManager
             Controls.Add(_statusStrip);
             Controls.Add(topPanel);
 
+            // Laufwerke und Baumwurzel werden einmalig geladen, bevor die erste Navigation erfolgt.
             PopulateDriveList();
             LoadTreeRoots();
 
             ClassicTheme.Apply(this);
 
+            // Ungültige Startpfade fallen auf ein verfügbares Laufwerk oder die Dokumente zurück.
             string startPath = string.IsNullOrWhiteSpace(initialPath) || !Directory.Exists(initialPath)
                 ? GetFirstAvailableDriveOrDocuments()
                 : initialPath;
             NavigateTo(startPath, updateTreeSelection: true);
         }
 
+        /// <summary>
+        /// Aktuell im Fenster angezeigtes Verzeichnis.
+        /// </summary>
         public string CurrentPath { get; private set; }
 
+        /// <summary>
+        /// Steuert, ob die ListView die volle Zeile markiert.
+        /// </summary>
         public bool FullRowSelect
         {
             get => _listView.FullRowSelect;
             set => _listView.FullRowSelect = value;
         }
 
+        /// <summary>
+        /// Interner Dateitransfermodus für Drag&Drop.
+        /// </summary>
         private enum FileTransferMode
         {
             Copy,
             Move
         }
 
+        /// <summary>
+        /// Öffnet die aktuelle Auswahl oder navigiert bei Verzeichnissen in diese hinein.
+        /// </summary>
         public void OpenSelectedEntry()
         {
             List<string> selectedPaths = GetSelectedPaths();
@@ -185,6 +275,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Kopiert die aktuell ausgewählten Einträge in ein vom Benutzer gewähltes Zielverzeichnis.
+        /// </summary>
         public void CopySelectedEntry()
         {
             ExecuteSelectionOperation("Kopieren nach", selectedPaths =>
@@ -208,6 +301,9 @@ namespace RetroNtFileManager
             });
         }
 
+        /// <summary>
+        /// Verschiebt die aktuelle Auswahl in ein vom Benutzer gewähltes Zielverzeichnis.
+        /// </summary>
         public void MoveSelectedEntry()
         {
             ExecuteSelectionOperation("Verschieben nach", selectedPaths =>
@@ -232,6 +328,9 @@ namespace RetroNtFileManager
             });
         }
 
+        /// <summary>
+        /// Benennt genau einen ausgewählten Eintrag um.
+        /// </summary>
         public void RenameSelectedEntry()
         {
             List<string> selectedPaths = GetSelectedPaths();
@@ -270,6 +369,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Löscht die aktuelle Auswahl nach Sicherheitsabfrage in den Papierkorb.
+        /// </summary>
         public void DeleteSelectedEntry()
         {
             ExecuteSelectionOperation("Löschen", selectedPaths =>
@@ -297,6 +399,9 @@ namespace RetroNtFileManager
             });
         }
 
+        /// <summary>
+        /// Erstellt im aktuellen Verzeichnis einen neuen Ordner.
+        /// </summary>
         public void CreateFolder()
         {
             try
@@ -312,6 +417,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Zeigt die Eigenschaften des selektierten Eintrags oder des aktuellen Verzeichnisses an.
+        /// </summary>
         public void ShowPropertiesForSelection()
         {
             string path = GetSelectedPaths().FirstOrDefault() ?? CurrentPath;
@@ -321,6 +429,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Wechselt eine Verzeichnisebene nach oben.
+        /// </summary>
         public void GoUpOneLevel()
         {
             if (string.IsNullOrWhiteSpace(CurrentPath))
@@ -335,6 +446,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Aktualisiert Baum, Liste und Statusanzeige des aktuellen Verzeichnisses.
+        /// </summary>
         public void RefreshView()
         {
             ReloadCurrentTreeNode();
@@ -343,28 +457,43 @@ namespace RetroNtFileManager
             Status("Ansicht aktualisiert");
         }
 
+        /// <summary>
+        /// Kopiert den aktuellen Pfad im Windows-Format in die Zwischenablage.
+        /// </summary>
         public void CopyCurrentPathAsWindowsPath()
         {
             CopyPathToClipboard(CurrentPath, linuxStyle: false);
         }
 
+        /// <summary>
+        /// Kopiert den aktuellen Pfad im Linux-/WSL-Format in die Zwischenablage.
+        /// </summary>
         public void CopyCurrentPathAsLinuxPath()
         {
             CopyPathToClipboard(CurrentPath, linuxStyle: true);
         }
 
+        /// <summary>
+        /// Kopiert den Pfad des ausgewählten Eintrags im Windows-Format.
+        /// </summary>
         public void CopySelectedEntryPathAsWindowsPath()
         {
             string path = GetSelectedPaths().FirstOrDefault() ?? CurrentPath;
             CopyPathToClipboard(path, linuxStyle: false);
         }
 
+        /// <summary>
+        /// Kopiert den Pfad des ausgewählten Eintrags im Linux-/WSL-Format.
+        /// </summary>
         public void CopySelectedEntryPathAsLinuxPath()
         {
             string path = GetSelectedPaths().FirstOrDefault() ?? CurrentPath;
             CopyPathToClipboard(path, linuxStyle: true);
         }
 
+        /// <summary>
+        /// Öffnet eine CMD-Sitzung im aktuellen Verzeichnis.
+        /// </summary>
         public void OpenCommandPromptHere()
         {
             try
@@ -378,6 +507,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Erweitert den aktuell selektierten Baumknoten.
+        /// </summary>
         public void ExpandCurrentTreeNode()
         {
             if (_treeView.SelectedNode == null)
@@ -389,17 +521,26 @@ namespace RetroNtFileManager
             _treeView.SelectedNode.Expand();
         }
 
+        /// <summary>
+        /// Reduziert den aktuell selektierten Baumknoten.
+        /// </summary>
         public void CollapseCurrentTreeNode()
         {
             _treeView.SelectedNode?.Collapse();
         }
 
+        /// <summary>
+        /// Stellt die Dateiliste auf die angegebene Ansicht um.
+        /// </summary>
         public void SetView(View view)
         {
             _listView.View = view;
             Status($"Ansicht: {view}");
         }
 
+        /// <summary>
+        /// Navigiert zu einem Verzeichnis und synchronisiert Oberfläche und Status.
+        /// </summary>
         private void NavigateTo(string path, bool updateTreeSelection)
         {
             try
@@ -409,6 +550,7 @@ namespace RetroNtFileManager
                     return;
                 }
 
+                // Vor Vergleichen und Anzeige wird der Pfad in eine konsistente Form gebracht.
                 path = NormalizeDirectory(path);
                 if (!Directory.Exists(path))
                 {
@@ -436,6 +578,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Lädt alle aktuell verfügbaren Laufwerke in die Laufwerksauswahl.
+        /// </summary>
         private void PopulateDriveList()
         {
             _driveComboBox.Items.Clear();
@@ -445,6 +590,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Baut die Wurzelknoten des Verzeichnisbaums aus den verfügbaren Laufwerken auf.
+        /// </summary>
         private void LoadTreeRoots()
         {
             _treeView.BeginUpdate();
@@ -459,6 +607,9 @@ namespace RetroNtFileManager
             _treeView.EndUpdate();
         }
 
+        /// <summary>
+        /// Erstellt einen Baumknoten für Laufwerk oder Verzeichnis.
+        /// </summary>
         private TreeNode CreateDirectoryNode(string text, string fullPath, bool isDrive = false)
         {
             string imageKey = isDrive ? "drive" : "folder";
@@ -472,6 +623,9 @@ namespace RetroNtFileManager
             return node;
         }
 
+        /// <summary>
+        /// Lädt Unterordner eines Baumknotens bei Bedarf nach.
+        /// </summary>
         private void LoadChildNodes(TreeNode node)
         {
             string path = node.Tag as string;
@@ -485,7 +639,8 @@ namespace RetroNtFileManager
                 node.Nodes.Clear();
                 try
                 {
-                    foreach (string directory in Directory.GetDirectories(path).OrderBy(d => d, StringComparer.CurrentCultureIgnoreCase))
+                    // Verzeichnisse werden bewusst vor Dateien geladen, damit die Anzeige klassisch und übersichtlich bleibt.
+                foreach (string directory in Directory.GetDirectories(path).OrderBy(d => d, StringComparer.CurrentCultureIgnoreCase))
                     {
                         string name = Path.GetFileName(directory.TrimEnd(Path.DirectorySeparatorChar));
                         if (string.IsNullOrWhiteSpace(name))
@@ -502,6 +657,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Befüllt die Dateiliste mit den Inhalten des angegebenen Verzeichnisses.
+        /// </summary>
         private void PopulateList(string path)
         {
             _listView.BeginUpdate();
@@ -509,6 +667,7 @@ namespace RetroNtFileManager
 
             try
             {
+                // Verzeichnisse werden bewusst vor Dateien geladen, damit die Anzeige klassisch und übersichtlich bleibt.
                 foreach (string directory in Directory.GetDirectories(path).OrderBy(d => d, StringComparer.CurrentCultureIgnoreCase))
                 {
                     DirectoryInfo info = new DirectoryInfo(directory);
@@ -570,6 +729,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Stellt sicher, dass für einen Eintrag ein passender Symbolschlüssel verfügbar ist.
+        /// </summary>
         private string EnsureImageKey(string path, bool isDirectory)
         {
             string key = isDirectory
@@ -594,6 +756,9 @@ namespace RetroNtFileManager
             return key;
         }
 
+        /// <summary>
+        /// Lädt Grundsymbole für Ordner, Dateien und Laufwerke vor.
+        /// </summary>
         private void LoadCommonIcons()
         {
             _smallImageList.Images.Add("folder", ShellIconHelper.GetSmallIcon(Environment.SystemDirectory, true));
@@ -608,6 +773,9 @@ namespace RetroNtFileManager
             _treeImageList.Images.Add("drive", ShellIconHelper.GetSmallIcon("C:\\", true));
         }
 
+        /// <summary>
+        /// Erstellt das Kontextmenü für Baum und Dateiliste.
+        /// </summary>
         private ContextMenuStrip BuildContextMenu()
         {
             ContextMenuStrip menu = new ContextMenuStrip();
@@ -626,6 +794,9 @@ namespace RetroNtFileManager
             return menu;
         }
 
+        /// <summary>
+        /// Synchronisiert die Laufwerksauswahl mit einem Pfad.
+        /// </summary>
         private void SynchronizeDriveSelection(string path)
         {
             string root = Path.GetPathRoot(path);
@@ -645,6 +816,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Stellt sicher, dass der zu einem Pfad passende Baumknoten selektiert ist.
+        /// </summary>
         private void EnsureTreeSelection(string path)
         {
             string normalized = NormalizeDirectory(path);
@@ -707,6 +881,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Lädt den aktuell selektierten Baumknoten neu.
+        /// </summary>
         private void ReloadCurrentTreeNode()
         {
             if (_treeView.SelectedNode == null)
@@ -725,6 +902,9 @@ namespace RetroNtFileManager
             LoadChildNodes(_treeView.SelectedNode);
         }
 
+        /// <summary>
+        /// Schreibt einen normalisierten Pfad in die Zwischenablage.
+        /// </summary>
         private void CopyPathToClipboard(string path, bool linuxStyle)
         {
             try
@@ -748,6 +928,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Ermittelt alle aktuell ausgewählten Dateisystempfade.
+        /// </summary>
         private List<string> GetSelectedPaths()
         {
             List<string> selected = new List<string>();
@@ -773,6 +956,9 @@ namespace RetroNtFileManager
             return selected;
         }
 
+        /// <summary>
+        /// Führt eine Aktion auf der aktuellen Auswahl mit Standardvalidierung aus.
+        /// </summary>
         private void ExecuteSelectionOperation(string title, Action<List<string>> action)
         {
             List<string> selectedPaths = GetSelectedPaths();
@@ -798,6 +984,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Selektiert einen Eintrag in der Dateiliste anhand seines Namens.
+        /// </summary>
         private void SelectEntryByName(string name)
         {
             foreach (ListViewItem item in _listView.Items)
@@ -813,6 +1002,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Öffnet eine Datei oder einen Link über die Betriebssystem-Shell.
+        /// </summary>
         private void OpenPath(string path)
         {
             try
@@ -830,6 +1022,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Startet eine Drag&Drop-Operation aus der Dateiliste heraus.
+        /// </summary>
         private void ListView_ItemDrag(object sender, ItemDragEventArgs e)
         {
             string[] selectedPaths = GetSelectedPaths().Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
@@ -838,6 +1033,7 @@ namespace RetroNtFileManager
                 return;
             }
 
+            // Zusätzlich zu den Dateipfaden wird das Quellfenster markiert, damit nach dem Drop beide Seiten aktualisiert werden können.
             DataObject dataObject = new DataObject();
             dataObject.SetData(DataFormats.FileDrop, selectedPaths);
             dataObject.SetData(DragSourceWindowFormat, this);
@@ -845,16 +1041,25 @@ namespace RetroNtFileManager
             DoDragDrop(dataObject, DragDropEffects.Copy | DragDropEffects.Move);
         }
 
+        /// <summary>
+        /// Berechnet den ersten erlaubten Drag&Drop-Effekt beim Eintritt in die Liste.
+        /// </summary>
         private void ListView_DragEnter(object sender, DragEventArgs e)
         {
             e.Effect = ResolveDropEffect(e);
         }
 
+        /// <summary>
+        /// Aktualisiert den Drag&Drop-Effekt während des Überfahrens der Liste.
+        /// </summary>
         private void ListView_DragOver(object sender, DragEventArgs e)
         {
             e.Effect = ResolveDropEffect(e);
         }
 
+        /// <summary>
+        /// Führt den eigentlichen Datei- oder Verzeichnis-Transfer per Drag&Drop aus.
+        /// </summary>
         private void ListView_DragDrop(object sender, DragEventArgs e)
         {
             try
@@ -871,6 +1076,7 @@ namespace RetroNtFileManager
                     return;
                 }
 
+                // Der Transfermodus orientiert sich an Explorer-Konventionen: Ctrl = Kopieren, Shift = Verschieben.
                 FileTransferMode transferMode = ResolveTransferMode(droppedPaths, targetDirectory, e.KeyState);
                 foreach (string droppedPath in droppedPaths)
                 {
@@ -907,6 +1113,9 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Ermittelt den erlaubten Drop-Effekt für die aktuelle Drag&Drop-Situation.
+        /// </summary>
         private DragDropEffects ResolveDropEffect(DragEventArgs e)
         {
             if (!TryGetDroppedPaths(e.Data, out string[] droppedPaths))
@@ -933,6 +1142,9 @@ namespace RetroNtFileManager
             return transferMode == FileTransferMode.Move ? DragDropEffects.Move : DragDropEffects.Copy;
         }
 
+        /// <summary>
+        /// Bestimmt das Zielverzeichnis unter dem Mauszeiger oder fällt auf das aktuelle Verzeichnis zurück.
+        /// </summary>
         private string GetDropTargetDirectory(Point clientPoint)
         {
             ListViewItem hoveredItem = _listView.GetItemAt(clientPoint.X, clientPoint.Y);
@@ -946,6 +1158,9 @@ namespace RetroNtFileManager
             return CurrentPath;
         }
 
+        /// <summary>
+        /// Extrahiert Dateipfade aus einem Drag&Drop-Datenobjekt.
+        /// </summary>
         private static bool TryGetDroppedPaths(IDataObject dataObject, out string[] droppedPaths)
         {
             droppedPaths = null;
@@ -959,6 +1174,9 @@ namespace RetroNtFileManager
             return droppedPaths != null && droppedPaths.Length > 0;
         }
 
+        /// <summary>
+        /// Prüft, ob ein Drop auf das Zielverzeichnis fachlich zulässig ist.
+        /// </summary>
         private static bool CanDropPathToTarget(string sourcePath, string targetDirectory)
         {
             if (string.IsNullOrWhiteSpace(sourcePath) || string.IsNullOrWhiteSpace(targetDirectory))
@@ -1003,8 +1221,12 @@ namespace RetroNtFileManager
             return true;
         }
 
+        /// <summary>
+        /// Bestimmt anhand von Quell- und Zielpfad sowie Modifier-Tasten, ob kopiert oder verschoben wird.
+        /// </summary>
         private static FileTransferMode ResolveTransferMode(IEnumerable<string> sourcePaths, string targetDirectory, int keyState)
         {
+            // Die Bitmasken entsprechen den Win32-Maus-/Tastaturzuständen während Drag&Drop.
             const int MkControl = 0x0008;
             const int MkShift = 0x0004;
 
@@ -1026,6 +1248,9 @@ namespace RetroNtFileManager
             return sameRoot ? FileTransferMode.Move : FileTransferMode.Copy;
         }
 
+        /// <summary>
+        /// Aktualisiert beide Statusfelder des Datei-Fensters.
+        /// </summary>
         private void UpdateStatusBar()
         {
             int total = _listView.Items.Count;
@@ -1046,18 +1271,27 @@ namespace RetroNtFileManager
             _rightStatus.Text = selected > 0 ? $"{selectedBytes:N0} Bytes ausgewählt" : CurrentPath;
         }
 
+        /// <summary>
+        /// Schreibt einen Statustext sowohl lokal als auch in das Hauptfenster.
+        /// </summary>
         private void Status(string text)
         {
             _statusCallback(text);
             _rightStatus.Text = text;
         }
 
+        /// <summary>
+        /// Zeigt einen Fehlerdialog an und schreibt die Meldung in den Statusbereich.
+        /// </summary>
         private void ShowError(string message)
         {
             MessageBox.Show(this, message, ProductInfo.ProductDisplayName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             Status(message);
         }
 
+        /// <summary>
+        /// Prüft, ob ein Pfad die Wurzel eines Laufwerks ist.
+        /// </summary>
         private static bool IsDriveRoot(string path)
         {
             string normalized = NormalizeDirectory(path);
@@ -1065,6 +1299,9 @@ namespace RetroNtFileManager
             return string.Equals(normalized, root, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Normalisiert einen Verzeichnispfad für sichere Vergleiche.
+        /// </summary>
         private static string NormalizeDirectory(string path)
         {
             string fullPath = Path.GetFullPath(path);
@@ -1076,6 +1313,9 @@ namespace RetroNtFileManager
             return fullPath;
         }
 
+        /// <summary>
+        /// Liefert das erste bereite Laufwerk oder den Dokumente-Ordner als Fallback.
+        /// </summary>
         private static string GetFirstAvailableDriveOrDocuments()
         {
             DriveInfo drive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady);
@@ -1087,6 +1327,9 @@ namespace RetroNtFileManager
             return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         }
 
+        /// <summary>
+        /// Reagiert auf einen Laufwerkswechsel durch den Benutzer.
+        /// </summary>
         private void DriveComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_synchronizingDriveSelection || _driveComboBox.SelectedItem == null)
@@ -1098,6 +1341,9 @@ namespace RetroNtFileManager
             NavigateTo(selectedDrive, updateTreeSelection: true);
         }
 
+        /// <summary>
+        /// Führt bei Enter in der Pfadleiste eine Navigation aus.
+        /// </summary>
         private void PathTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -1108,11 +1354,17 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Lädt beim Aufklappen eines Knotens dessen Unterverzeichnisse nach.
+        /// </summary>
         private void TreeView_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
             LoadChildNodes(e.Node);
         }
 
+        /// <summary>
+        /// Synchronisiert die Dateiliste mit der aktuellen Baumselektion.
+        /// </summary>
         private void TreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (_synchronizingTreeSelection)
@@ -1126,11 +1378,17 @@ namespace RetroNtFileManager
             }
         }
 
+        /// <summary>
+        /// Öffnet den aktuell aktivierten Eintrag.
+        /// </summary>
         private void ListView_ItemActivate(object sender, EventArgs e)
         {
             OpenSelectedEntry();
         }
 
+        /// <summary>
+        /// Ändert die Sortierspalte oder die Sortierreihenfolge der Dateiliste.
+        /// </summary>
         private void ListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             if (_listComparer.ColumnIndex == e.Column)
@@ -1148,6 +1406,9 @@ namespace RetroNtFileManager
             _listView.Sort();
         }
 
+        /// <summary>
+        /// Verarbeitet dateifensterspezifische Tastenkombinationen in der Liste.
+        /// </summary>
         private void ListView_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.Shift && e.KeyCode == Keys.C)
