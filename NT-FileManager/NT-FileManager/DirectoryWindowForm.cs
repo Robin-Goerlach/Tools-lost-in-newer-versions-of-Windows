@@ -25,6 +25,8 @@ namespace RetroNtFileManager
         private readonly FileListViewItemComparer _listComparer;
         private readonly ContextMenuStrip _contextMenu;
 
+        private const string DragSourceWindowFormat = "SASD.RetroNtFileManager.SourceWindow";
+
         private bool _synchronizingTreeSelection;
         private bool _synchronizingDriveSelection;
 
@@ -102,7 +104,8 @@ namespace RetroNtFileManager
                 SmallImageList = _smallImageList,
                 LargeImageList = _largeImageList,
                 BorderStyle = BorderStyle.Fixed3D,
-                ListViewItemSorter = _listComparer
+                ListViewItemSorter = _listComparer,
+                AllowDrop = true
             };
             _listView.Columns.Add("Name", 240);
             _listView.Columns.Add("Erw.", 70);
@@ -114,6 +117,10 @@ namespace RetroNtFileManager
             _listView.ColumnClick += ListView_ColumnClick;
             _listView.SelectedIndexChanged += (_, __) => UpdateStatusBar();
             _listView.KeyDown += ListView_KeyDown;
+            _listView.ItemDrag += ListView_ItemDrag;
+            _listView.DragEnter += ListView_DragEnter;
+            _listView.DragOver += ListView_DragOver;
+            _listView.DragDrop += ListView_DragDrop;
 
             _contextMenu = BuildContextMenu();
             _listView.ContextMenuStrip = _contextMenu;
@@ -149,6 +156,12 @@ namespace RetroNtFileManager
         {
             get => _listView.FullRowSelect;
             set => _listView.FullRowSelect = value;
+        }
+
+        private enum FileTransferMode
+        {
+            Copy,
+            Move
         }
 
         public void OpenSelectedEntry()
@@ -815,6 +828,202 @@ namespace RetroNtFileManager
             {
                 ShowError(ex.Message);
             }
+        }
+
+        private void ListView_ItemDrag(object sender, ItemDragEventArgs e)
+        {
+            string[] selectedPaths = GetSelectedPaths().Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            if (selectedPaths.Length == 0)
+            {
+                return;
+            }
+
+            DataObject dataObject = new DataObject();
+            dataObject.SetData(DataFormats.FileDrop, selectedPaths);
+            dataObject.SetData(DragSourceWindowFormat, this);
+
+            DoDragDrop(dataObject, DragDropEffects.Copy | DragDropEffects.Move);
+        }
+
+        private void ListView_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = ResolveDropEffect(e);
+        }
+
+        private void ListView_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = ResolveDropEffect(e);
+        }
+
+        private void ListView_DragDrop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (!TryGetDroppedPaths(e.Data, out string[] droppedPaths))
+                {
+                    return;
+                }
+
+                Point clientPoint = _listView.PointToClient(new Point(e.X, e.Y));
+                string targetDirectory = GetDropTargetDirectory(clientPoint);
+                if (string.IsNullOrWhiteSpace(targetDirectory) || !Directory.Exists(targetDirectory))
+                {
+                    return;
+                }
+
+                FileTransferMode transferMode = ResolveTransferMode(droppedPaths, targetDirectory, e.KeyState);
+                foreach (string droppedPath in droppedPaths)
+                {
+                    if (transferMode == FileTransferMode.Move)
+                    {
+                        FileSystemOperations.MoveEntry(droppedPath, targetDirectory);
+                    }
+                    else
+                    {
+                        FileSystemOperations.CopyEntry(droppedPath, targetDirectory);
+                    }
+                }
+
+                RefreshView();
+
+                if (e.Data.GetDataPresent(DragSourceWindowFormat) && e.Data.GetData(DragSourceWindowFormat) is DirectoryWindowForm sourceWindow)
+                {
+                    if (!ReferenceEquals(sourceWindow, this))
+                    {
+                        sourceWindow.RefreshView();
+                    }
+                    else if (transferMode == FileTransferMode.Move)
+                    {
+                        sourceWindow.RefreshView();
+                    }
+                }
+
+                string actionText = transferMode == FileTransferMode.Move ? "verschoben" : "kopiert";
+                Status($"{droppedPaths.Length} Objekt(e) per Drag & Drop {actionText} nach {targetDirectory}");
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+        }
+
+        private DragDropEffects ResolveDropEffect(DragEventArgs e)
+        {
+            if (!TryGetDroppedPaths(e.Data, out string[] droppedPaths))
+            {
+                return DragDropEffects.None;
+            }
+
+            Point clientPoint = _listView.PointToClient(new Point(e.X, e.Y));
+            string targetDirectory = GetDropTargetDirectory(clientPoint);
+            if (string.IsNullOrWhiteSpace(targetDirectory) || !Directory.Exists(targetDirectory))
+            {
+                return DragDropEffects.None;
+            }
+
+            foreach (string droppedPath in droppedPaths)
+            {
+                if (!CanDropPathToTarget(droppedPath, targetDirectory))
+                {
+                    return DragDropEffects.None;
+                }
+            }
+
+            FileTransferMode transferMode = ResolveTransferMode(droppedPaths, targetDirectory, e.KeyState);
+            return transferMode == FileTransferMode.Move ? DragDropEffects.Move : DragDropEffects.Copy;
+        }
+
+        private string GetDropTargetDirectory(Point clientPoint)
+        {
+            ListViewItem hoveredItem = _listView.GetItemAt(clientPoint.X, clientPoint.Y);
+            if (hoveredItem?.Tag is FileEntryInfo hoveredInfo &&
+                string.Equals(hoveredInfo.Kind, "Directory", StringComparison.OrdinalIgnoreCase) &&
+                Directory.Exists(hoveredInfo.FullPath))
+            {
+                return hoveredInfo.FullPath;
+            }
+
+            return CurrentPath;
+        }
+
+        private static bool TryGetDroppedPaths(IDataObject dataObject, out string[] droppedPaths)
+        {
+            droppedPaths = null;
+
+            if (dataObject == null || !dataObject.GetDataPresent(DataFormats.FileDrop))
+            {
+                return false;
+            }
+
+            droppedPaths = dataObject.GetData(DataFormats.FileDrop) as string[];
+            return droppedPaths != null && droppedPaths.Length > 0;
+        }
+
+        private static bool CanDropPathToTarget(string sourcePath, string targetDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(sourcePath) || string.IsNullOrWhiteSpace(targetDirectory))
+            {
+                return false;
+            }
+
+            bool sourceExists = File.Exists(sourcePath) || Directory.Exists(sourcePath);
+            if (!sourceExists || !Directory.Exists(targetDirectory))
+            {
+                return false;
+            }
+
+            string normalizedTarget = NormalizeDirectory(targetDirectory);
+            string sourceParent = Path.GetDirectoryName(sourcePath);
+            if (!string.IsNullOrWhiteSpace(sourceParent) &&
+                string.Equals(NormalizeDirectory(sourceParent), normalizedTarget, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (Directory.Exists(sourcePath))
+            {
+                string normalizedSource = NormalizeDirectory(sourcePath);
+                if (string.Equals(normalizedSource, normalizedTarget, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                if (normalizedTarget.StartsWith(normalizedSource + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+
+            string targetPath = Path.Combine(targetDirectory, Path.GetFileName(sourcePath));
+            if (string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static FileTransferMode ResolveTransferMode(IEnumerable<string> sourcePaths, string targetDirectory, int keyState)
+        {
+            const int MkControl = 0x0008;
+            const int MkShift = 0x0004;
+
+            if ((keyState & MkControl) == MkControl)
+            {
+                return FileTransferMode.Copy;
+            }
+
+            if ((keyState & MkShift) == MkShift)
+            {
+                return FileTransferMode.Move;
+            }
+
+            string targetRoot = Path.GetPathRoot(targetDirectory) ?? string.Empty;
+            bool sameRoot = sourcePaths
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .All(path => string.Equals(Path.GetPathRoot(path) ?? string.Empty, targetRoot, StringComparison.OrdinalIgnoreCase));
+
+            return sameRoot ? FileTransferMode.Move : FileTransferMode.Copy;
         }
 
         private void UpdateStatusBar()
