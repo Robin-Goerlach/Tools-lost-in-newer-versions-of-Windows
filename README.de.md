@@ -2,7 +2,7 @@
 
 Kleine, eigenständige Windows-Werkzeuge, inspiriert von vertrauten Programmen aus der klassischen Windows-Zeit.
 
-[English](README.md) | **Deutsch**
+[English](README.md) | **Deutsch*
 
 ![Illustration von NT-FileManager und NT-Clock auf einem Desktop im klassischen Windows-Stil](docs/images/retro-windows-tools-desktop.png)
 
@@ -12,14 +12,14 @@ Kleine, eigenständige Windows-Werkzeuge, inspiriert von vertrauten Programmen a
 
 Manche ältere Windows-Werkzeuge bleiben wegen ihres Erscheinungsbilds, ihrer Einfachheit und ihrer Bedienung in guter Erinnerung. Dieses Repository erkundet, wie sich dieses Gefühl mit kleinen, eigenständigen Anwendungen zurückbringen lässt.
 
-Dies ist ein **Hobbyprojekt – just for fun und nice to have**: Raum zum Experimentieren, für etwas Nostalgie und für nützliche Programme, wenn Zeit und Lust vorhanden sind. Es gibt keine Fristen, zugesagten Veröffentlichungstermine oder Verpflichtungen, jede Idee umzusetzen.
+Dies ist ein **just for fun und nice to have - Projekt**: Raum zum Experimentieren, für etwas Nostalgie und für nützliche Programme, wenn Zeit und Lust vorhanden sind. Es gibt keine Fristen, zugesagten Veröffentlichungstermine oder Verpflichtungen, jede Idee umzusetzen.
 
 ## Projektphilosophie
 
 - **Wiedererkennbares klassisches Windows-Erscheinungsbild.** Vertraute Gestaltung und einfache Arbeitsabläufe erhalten, wo sie die Orientierung erleichtern.
 - **Sinnvolle Modernisierung.** Bedienbarkeit, Zuverlässigkeit und Kompatibilität verbessern, wenn es praktisch sinnvoll ist.
 - **Kein verbissener pixelgenauer Nachbau.** Das Original dient als Inspiration, nicht als Vorgabe, für die wir uns mit umständlichem Code oder unnötigem Aufwand verbiegen.
-- **Kleine, eigenständige Werkzeuge.** Jede Anwendung hat ihren eigenen Zweck und darf sich in ihrem eigenen Tempo entwickeln. Umsetzung und Dokumentation bleiben dem Hobbyprojekt angemessen.
+- **Kleine, eigenständige Werkzeuge.** Jede Anwendung hat ihren eigenen Zweck und darf sich in ihrem eigenen Tempo entwickeln. Umsetzung und Dokumentation bleiben dem Projekt Charaker angemessen.
 
 ## Vorhandene Anwendungen
 
