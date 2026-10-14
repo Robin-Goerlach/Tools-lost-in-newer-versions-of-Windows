@@ -19,7 +19,7 @@ This is a **just-for-fun, nice-to-have project**: a place to experiment, enjoy a
 - **Recognizable classic Windows appearance.** Preserve familiar visual cues and straightforward workflows where they help people feel at home.
 - **Sensible modernization.** Improve usability, reliability, and compatibility where it makes practical sense.
 - **No obsessive pixel-perfect replication.** The original look is inspiration, not a constraint that justifies awkward code or unnecessary effort.
-- **Small, independent utilities.** Each application has its own purpose and can evolve at its own pace. Keep implementation and documentation proportionate to a hobby project.
+- **Small, independent utilities.** Each application has its own purpose and can evolve at its own pace. Keep implementation and documentation proportionate to the project character.
 
 ## Existing applications
 
