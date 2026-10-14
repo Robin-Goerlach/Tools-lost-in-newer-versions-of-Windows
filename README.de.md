@@ -4,6 +4,10 @@ Kleine, eigenständige Windows-Werkzeuge, inspiriert von vertrauten Programmen a
 
 [English](README.md) | **Deutsch**
 
+![Illustration von NT-FileManager und NT-Clock auf einem Desktop im klassischen Windows-Stil](docs/images/retro-windows-tools-desktop.png)
+
+*Generierte Illustration der gestalterischen Richtung des Projekts; die tatsächlichen Anwendungen können abweichen.*
+
 ## Warum es dieses Projekt gibt
 
 Manche ältere Windows-Werkzeuge bleiben wegen ihres Erscheinungsbilds, ihrer Einfachheit und ihrer Bedienung in guter Erinnerung. Dieses Repository erkundet, wie sich dieses Gefühl mit kleinen, eigenständigen Anwendungen zurückbringen lässt.
@@ -28,7 +32,7 @@ Diese Verzeichnisse enthalten Implementierungen. Details und Hinweise zum Bauen 
 
 ## Ideen zum Erkunden
 
-Die folgenden Verzeichnisse sind **konzeptionelle Platzhalter, keine implementierten Anwendungen**. Sie halten Möglichkeiten fest, keinen verbindlichen Entwicklungsplan oder eine Lieferzusage.
+Die folgenden Verzeichnisse enthalten **minimale Projektgerüste ohne implementierte Werkzeugfunktionen**. Jede Projektmappe öffnet ein Fenster mit einem Konzept-Hinweis. Sie halten Möglichkeiten fest, keinen verbindlichen Entwicklungsplan oder eine Lieferzusage.
 
 | Idee | Mögliche Richtung |
 | --- | --- |

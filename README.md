@@ -4,6 +4,10 @@ Small, independent Windows utilities inspired by familiar tools from the classic
 
 **English** | [Deutsch](README.de.md)
 
+![Illustration of NT-FileManager and NT-Clock on a classic Windows-style desktop](docs/images/retro-windows-tools-desktop.png)
+
+*Generated illustration of the project’s visual direction; actual applications may differ.*
+
 ## Why this project exists
 
 Some older Windows tools are fondly remembered for their appearance, simplicity, and way of working. This repository explores bringing that feeling back through small, independent utilities.
@@ -28,7 +32,7 @@ These directories contain implementations. See their individual READMEs for deta
 
 ## Ideas to explore
 
-The following directories are **conceptual placeholders, not implemented applications**. They record possibilities, not a roadmap or delivery promise.
+The following directories contain **minimal project scaffolds, with no utility features implemented**. Each solution opens a concept placeholder window. They record possibilities, not a roadmap or delivery promise.
 
 | Idea | Possible direction |
 | --- | --- |
