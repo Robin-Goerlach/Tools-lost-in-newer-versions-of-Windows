@@ -12,7 +12,7 @@ Small, independent Windows utilities inspired by familiar tools from the classic
 
 Some older Windows tools are fondly remembered for their appearance, simplicity, and way of working. This repository explores bringing that feeling back through small, independent utilities.
 
-This is a **just-for-fun, nice-to-have hobby project**: a place to experiment, enjoy a little nostalgia, and build something useful when time and interest allow. There are no deadlines, promised release dates, or commitments to implement every idea.
+This is a **just-for-fun, nice-to-have project**: a place to experiment, enjoy a little nostalgia, and build something useful when time and interest allow. There are no deadlines, promised release dates, or commitments to implement every idea.
 
 ## Project philosophy
 
